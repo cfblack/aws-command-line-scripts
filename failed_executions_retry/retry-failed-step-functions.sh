@@ -37,7 +37,7 @@ set -o pipefail
 # Script configuration
 readonly SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-readonly FAILED_STATE="patchDrupalSection"
+readonly FAILED_STATE="PatchDrupalSection"
 readonly WAIT_BETWEEN_EXECUTIONS=5  # seconds
 readonly MAX_RETRIES=3
 
