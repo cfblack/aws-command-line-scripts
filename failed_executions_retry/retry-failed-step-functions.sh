@@ -525,17 +525,15 @@ process_failed_executions() {
                 restarted_count=$((restarted_count + 1))
 
                 # Wait before starting the next execution
-                if [[ $execution_count -lt $(echo "$failed_executions" | jq -s 'length') ]]; then
-                    print_info "  -> Waiting $WAIT_BETWEEN_EXECUTIONS seconds before next execution..."
-                    sleep "$WAIT_BETWEEN_EXECUTIONS"
-                fi
+                print_info "  -> Waiting $WAIT_BETWEEN_EXECUTIONS seconds before next execution..."
+                sleep "$WAIT_BETWEEN_EXECUTIONS"
             else
                 failed_to_restart=$((failed_to_restart + 1))
             fi
         else
             print_info "  -> Did not fail at $failed_state state, skipping"
         fi
-    done < <(echo "$failed_executions" | jq -c '.') 
+    done <<< "$failed_executions"
 
     print_info ""
     print_info "====== Summary ======"
