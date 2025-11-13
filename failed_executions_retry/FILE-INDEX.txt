@@ -1,0 +1,296 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                        FILE INDEX & GUIDE                                 ║
+║              AWS Step Functions Retry Script - Version 1.1                 ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+📁 COMPLETE FILE LISTING (13 files, 97 KB)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 START HERE (Read these first!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📄 READ-ME-FIRST.txt (7.5 KB)
+   ↳ START HERE if you just downloaded this package
+   ↳ Quick overview and next steps
+   ↳ Version 1.1 improvements highlighted
+   ↳ Recommended workflow
+
+📄 00-START-HERE.txt (8.0 KB)
+   ↳ Quick reference guide
+   ↳ Common commands and troubleshooting
+   ↳ Execution name transformation examples
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️  EXECUTABLE SCRIPTS (Make executable with: chmod +x *.sh)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 retry-failed-step-functions.sh (18 KB)
+   ↳ MAIN SCRIPT - Does the actual work
+   ↳ Retries failed Step Functions executions
+   ↳ Filters by state (PatchDrupalSection)
+   ↳ Smart execution naming
+   ↳ Full error handling
+   Usage:
+     ./retry-failed-step-functions.sh \
+       --date 2025-11-13 \
+       --region us-east-1 \
+       --account-id 469225647823 \
+       --profile cpe_admin-cpe \
+       --state-machine individualSectionSM
+
+🔧 diagnose-setup.sh (7.0 KB) ⭐ NEW IN V1.1
+   ↳ DIAGNOSTIC TOOL - Run this first!
+   ↳ Verifies your setup is correct
+   ↳ Checks dependencies, credentials, permissions
+   ↳ Identifies issues before running main script
+   Usage:
+     ./diagnose-setup.sh \
+       cpe_admin-cpe \
+       us-east-1 \
+       469225647823 \
+       individualSectionSM
+
+🔧 retry-step-functions-wrapper.sh (6.0 KB)
+   ↳ INTERACTIVE WRAPPER - Easy mode
+   ↳ Prompts for all parameters
+   ↳ Optional - use instead of command line
+   Usage:
+     ./retry-step-functions-wrapper.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Quick Setup & Learning:
+
+📖 QUICKSTART.md (6.0 KB)
+   ↳ 5-minute setup guide
+   ↳ Step-by-step instructions
+   ↳ Common one-liners
+   ↳ Troubleshooting tips
+
+📖 INDEX.md (8.5 KB)
+   ↳ Complete navigation guide
+   ↳ All parameters explained
+   ↳ Examples for different use cases
+   ↳ Learning resources
+
+Detailed Information:
+
+📖 README.md (8.5 KB)
+   ↳ Complete documentation
+   ↳ Features explained
+   ↳ Installation instructions
+   ↳ Advanced configuration
+
+📖 EXAMPLES.md (9.5 KB)
+   ↳ Real-world usage examples
+   ↳ Configuration file approach
+   ↳ Multiple regions/machines
+   ↳ Docker and Lambda integration
+   ↳ Cron scheduling
+
+Troubleshooting & Updates:
+
+📖 TROUBLESHOOTING.md (7.0 KB) ⭐ UPDATED IN V1.1
+   ↳ Common errors and solutions
+   ↳ How to use diagnostic script
+   ↳ Step-by-step debugging
+   ↳ AWS CLI verification commands
+   ↳ IAM permission checking
+
+📖 VERSION-1.1-UPDATES.md (6.5 KB) ⭐ NEW IN V1.1
+   ↳ What's new in version 1.1
+   ↳ Bugs fixed
+   ↳ New features added
+   ↳ Upgrade instructions
+   ↳ Pro tips
+
+📖 CHANGELOG.md (2.0 KB)
+   ↳ Version history
+   ↳ Release notes
+
+Reference:
+
+📖 PERMISSIONS.md (2.5 KB)
+   ↳ File permission fixes
+   ↳ IAM policy requirements
+   ↳ AWS credential setup
+
+📖 FILE-INDEX.txt (This file)
+   ↳ Complete file listing
+   ↳ File descriptions
+   ↳ Quick reference guide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 QUICK REFERENCE - WHAT TO READ WHEN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+"I just downloaded this"
+→ Read: READ-ME-FIRST.txt
+
+"I want to get started quickly"
+→ Read: QUICKSTART.md
+
+"I'm getting an error"
+→ Read: TROUBLESHOOTING.md
+
+"I want to understand everything"
+→ Read: README.md + EXAMPLES.md
+
+"I'm on macOS and getting errors"
+→ VERSION-1.1-UPDATES.md (it's been fixed!)
+
+"I want to run diagnostics"
+→ Use: diagnose-setup.sh
+
+"I want interactive prompts"
+→ Use: retry-step-functions-wrapper.sh
+
+"I want advanced examples"
+→ Read: EXAMPLES.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ COMMON COMMANDS QUICK REFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Setup:
+  chmod +x *.sh
+
+Run diagnostics:
+  ./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+
+Get help:
+  ./retry-failed-step-functions.sh --help
+
+Run interactively:
+  ./retry-step-functions-wrapper.sh
+
+Run directly:
+  ./retry-failed-step-functions.sh \
+    --date 2025-11-13 \
+    --region us-east-1 \
+    --account-id 469225647823 \
+    --profile cpe_admin-cpe \
+    --state-machine individualSectionSM
+
+Run with debug output:
+  ./retry-failed-step-functions.sh ... --verbose
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏃 YOUR FIRST 5 MINUTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Minute 1: Setup
+  $ chmod +x *.sh
+
+Minute 2: Read intro
+  $ cat READ-ME-FIRST.txt
+
+Minute 3: Run diagnostics
+  $ ./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+
+Minute 4: Check results
+  Look for ✓ marks (success) or ✗ marks (problems)
+
+Minute 5: Run or troubleshoot
+  If all ✓: run the script
+  If ✗: check TROUBLESHOOTING.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 FILE ORGANIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+By Purpose:
+
+Executables (chmod +x first):
+  • retry-failed-step-functions.sh ← Main
+  • diagnose-setup.sh ← Diagnostic (run first!)
+  • retry-step-functions-wrapper.sh ← Alternative
+
+Getting Started (read in order):
+  1. READ-ME-FIRST.txt
+  2. 00-START-HERE.txt
+  3. QUICKSTART.md
+
+Detailed Learning:
+  • README.md
+  • INDEX.md
+  • EXAMPLES.md
+
+Troubleshooting:
+  • TROUBLESHOOTING.md (fixes problems)
+  • VERSION-1.1-UPDATES.md (new features)
+  • CHANGELOG.md (history)
+
+Reference:
+  • PERMISSIONS.md
+  • FILE-INDEX.txt (this file)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎓 LEARNING PATH BY LEVEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Beginner:
+  1. READ-ME-FIRST.txt (overview)
+  2. chmod +x *.sh
+  3. Run diagnose-setup.sh
+  4. QUICKSTART.md
+  5. Run the script
+
+Intermediate:
+  1. README.md (full docs)
+  2. EXAMPLES.md (patterns)
+  3. TROUBLESHOOTING.md (solutions)
+  4. Customize for your needs
+
+Advanced:
+  1. Read source code (retry-failed-step-functions.sh)
+  2. EXAMPLES.md (advanced patterns)
+  3. Integrate with CI/CD
+  4. Schedule with cron/Lambda
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✨ VERSION 1.1 HIGHLIGHTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+New Files:
+  ✓ diagnose-setup.sh - Diagnostic tool (run before main script!)
+  ✓ VERSION-1.1-UPDATES.md - What's new
+  ✓ READ-ME-FIRST.txt - New intro
+
+Fixes:
+  ✓ macOS date command compatibility
+  ✓ JSON parsing error handling
+  ✓ Better error messages
+
+Improvements:
+  ✓ Enhanced troubleshooting guide
+  ✓ Verbose debug output
+  ✓ Better documentation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📞 HELP & SUPPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem              → Solution
+─────────────────────────────────────────────────────────────────────────
+Permission denied    → chmod +x retry-failed-step-functions.sh
+jq parse error       → Run: diagnose-setup.sh
+AWS auth failed      → Check: TROUBLESHOOTING.md
+No executions found  → Try different date
+macOS errors         → See: VERSION-1.1-UPDATES.md
+Need quick start     → Read: QUICKSTART.md
+Want examples        → See: EXAMPLES.md
+Need full reference  → Read: README.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+👉 NEXT STEP: Start with READ-ME-FIRST.txt or run:
+
+   chmod +x *.sh
+   ./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+
+Ready? Let's go! 🚀
+
+╚═══════════════════════════════════════════════════════════════════════════╝

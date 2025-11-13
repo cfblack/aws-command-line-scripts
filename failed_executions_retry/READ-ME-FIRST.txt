@@ -1,0 +1,194 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                                                                           ║
+║   AWS STEP FUNCTIONS FAILED EXECUTION RETRY SCRIPT - COMPLETE PACKAGE    ║
+║                                Version 1.1 (UPDATED)                      ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+📌 IMPORTANT: If you just downloaded this, READ THIS FIRST!
+
+🚀 QUICK START (5 MINUTES)
+
+1. Make scripts executable:
+   chmod +x *.sh
+
+2. Run the diagnostic script first:
+   ./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+
+   This checks everything before you run the main script.
+
+3. If diagnostic passes, run:
+   ./retry-failed-step-functions.sh \
+     --date 2025-11-13 \
+     --region us-east-1 \
+     --account-id 469225647823 \
+     --profile cpe_admin-cpe \
+     --state-machine individualSectionSM
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ WHAT'S NEW IN VERSION 1.1
+
+✓ Fixed macOS date validation errors
+✓ Better JSON error handling
+✓ New diagnostic script (run this first!)
+✓ Improved error messages
+✓ Better troubleshooting guide
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📦 WHAT YOU HAVE
+
+Executable Scripts (3):
+  • retry-failed-step-functions.sh     ← Main script (18 KB)
+  • retry-step-functions-wrapper.sh    ← Interactive mode (6 KB)
+  • diagnose-setup.sh                  ← NEW: Diagnostic tool (7 KB)
+
+Documentation (8):
+  • 00-START-HERE.txt                  ← Quick reference
+  • VERSION-1.1-UPDATES.md             ← What's new
+  • TROUBLESHOOTING.md                 ← Error solutions
+  • README.md                          ← Full docs
+  • QUICKSTART.md                      ← 5-minute setup
+  • EXAMPLES.md                        ← Usage examples
+  • CHANGELOG.md                       ← Version history
+  • PERMISSIONS.md                     ← File permissions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ RECOMMENDED WORKFLOW
+
+Step 1: Setup
+  chmod +x *.sh
+
+Step 2: Diagnose (NEW!)
+  ./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+  
+  This checks:
+  ✓ AWS CLI installed
+  ✓ jq installed
+  ✓ AWS credentials valid
+  ✓ Can access Step Functions
+  ✓ Can list your state machine
+  ✓ Can list failed executions
+
+Step 3: Fix any issues (if needed)
+  Review TROUBLESHOOTING.md for solutions
+
+Step 4: Run the script
+  ./retry-failed-step-functions.sh \
+    --date 2025-11-13 \
+    --region us-east-1 \
+    --account-id 469225647823 \
+    --profile cpe_admin-cpe \
+    --state-machine individualSectionSM
+
+Step 5: Check results
+  Look at Step Functions console to verify executions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❓ COMMON QUESTIONS
+
+Q: Where do I start?
+A: 1) chmod +x *.sh
+   2) Run ./diagnose-setup.sh (new!)
+   3) Follow QUICKSTART.md
+
+Q: I'm getting a jq parse error
+A: Run the diagnostic script first - it will identify the issue
+
+Q: Is this for macOS or Linux?
+A: Both! Version 1.1 is fully compatible with macOS and Linux
+
+Q: What if the diagnostic script fails?
+A: Check TROUBLESHOOTING.md for solutions
+
+Q: Can I schedule this to run daily?
+A: Yes! See EXAMPLES.md for cron setup
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 DOCUMENTATION READING ORDER
+
+Start Here:
+  1. This file (READ-ME-FIRST.txt)
+  2. Run: ./diagnose-setup.sh
+  3. Read: QUICKSTART.md
+
+If You Have Issues:
+  • TROUBLESHOOTING.md (error solutions)
+  • VERSION-1.1-UPDATES.md (what's new)
+
+For More Info:
+  • README.md (complete docs)
+  • EXAMPLES.md (usage patterns)
+  • 00-START-HERE.txt (quick reference)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 YOUR NEXT STEP
+
+Right now:
+
+1. Make scripts executable:
+   chmod +x *.sh
+
+2. Run diagnostics:
+   ./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+
+This will tell you if everything is set up correctly!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ℹ️  FEATURES
+
+• Retries failed Step Functions executions
+• Targets specific states (PatchDrupalSection)
+• Smart execution naming (adds "-r" suffix)
+• 5-second delay between retries (prevents throttling)
+• Preserves original execution input
+• Works on macOS and Linux
+• Comprehensive error handling
+• Diagnostic tool to verify setup
+• Full documentation included
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ VERSION 1.1 IMPROVEMENTS
+
+Fixed:
+  ✓ macOS date command incompatibility
+  ✓ JSON parsing errors
+  ✓ Better error messages
+
+Added:
+  ✓ Diagnostic script (identifies issues automatically)
+  ✓ Enhanced troubleshooting guide
+  ✓ Verbose debug output
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 TROUBLESHOOTING QUICK FIX
+
+If you get ANY error:
+
+1. Run diagnostics:
+   chmod +x *.sh
+   ./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+
+2. Look for ✗ marks in output
+
+3. Check TROUBLESHOOTING.md for that specific issue
+
+4. If still stuck, run script with verbose:
+   ./retry-failed-step-functions.sh ... --verbose
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready? Let's go! 🚀
+
+chmod +x *.sh
+./diagnose-setup.sh cpe_admin-cpe us-east-1 469225647823 individualSectionSM
+
+╚═══════════════════════════════════════════════════════════════════════════╝
