@@ -387,14 +387,62 @@ failed_at_target_state() {
     history=$(get_execution_history "$execution_arn" "$region" "$profile")
 
     if [[ -z "$history" ]]; then
+        print_verbose "No execution history found"
         return 1
     fi
 
-    # Look for a StateFailed event with the target state name
-    if echo "$history" | jq -e ".events[] | select(.type==\"StateFailed\" and .stateFailedEventDetails.state==\"$target_state\")" &>/dev/null; then
+    # Debug: Show all failure-related events
+    if [[ "$VERBOSE" == true ]]; then
+        print_verbose "Searching for failure at state: $target_state"
+
+        # Show all events that contain "Failed" in the type
+        local failed_events
+        failed_events=$(echo "$history" | jq -r '.events[] | select(.type | contains("Failed")) | "Event: " + .type' 2>/dev/null)
+        if [[ -n "$failed_events" ]]; then
+            print_verbose "All failure events:"
+            echo "$failed_events" | while IFS= read -r line; do
+                print_verbose "  $line"
+            done
+        fi
+
+        # Try to find what state names are in TaskFailed events
+        local task_failed_info
+        task_failed_info=$(echo "$history" | jq -r '.events[] | select(.type=="TaskFailed") | "TaskFailed - previousEventId: " + (.previousEventId | tostring)' 2>/dev/null)
+        if [[ -n "$task_failed_info" ]]; then
+            print_verbose "TaskFailed event details:"
+            echo "$task_failed_info" | while IFS= read -r line; do
+                print_verbose "  $line"
+            done
+        fi
+    fi
+
+    # Build a map of event IDs to state names from StateEntered events
+    # Then check if any TaskFailed event references a StateEntered event for our target state
+    local state_entered_map
+    state_entered_map=$(echo "$history" | jq -r '
+        .events[] |
+        select(.type == "TaskStateEntered" or .type == "StateEntered") |
+        "\(.id):\(.stateEnteredEventDetails.name // .taskStateEnteredEventDetails.name // "unknown")"
+    ' 2>/dev/null)
+
+    # Find TaskFailed events and check their previous event
+    while IFS=: read -r event_id state_name; do
+        if [[ "$state_name" == "$target_state" ]]; then
+            # Check if there's a TaskFailed event that references this state
+            if echo "$history" | jq -e ".events[] | select(.type==\"TaskFailed\" and .previousEventId==$event_id)" &>/dev/null; then
+                print_verbose "Found TaskFailed event for state: $target_state (via event ID correlation)"
+                return 0
+            fi
+        fi
+    done <<< "$state_entered_map"
+
+    # Fallback: Check for LambdaFunctionFailed with state name
+    if echo "$history" | jq -e ".events[] | select(.type==\"LambdaFunctionFailed\") | select(.previousEventId as \$prev | any(.events[]; .id == \$prev and (.stateEnteredEventDetails.name // .taskStateEnteredEventDetails.name) == \"$target_state\"))" &>/dev/null 2>&1; then
+        print_verbose "Found LambdaFunctionFailed for state: $target_state"
         return 0
     fi
 
+    print_verbose "No failure found for state: $target_state"
     return 1
 }
 
