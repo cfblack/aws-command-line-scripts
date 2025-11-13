@@ -405,41 +405,83 @@ failed_at_target_state() {
             done
         fi
 
-        # Try to find what state names are in TaskFailed events
-        local task_failed_info
-        task_failed_info=$(echo "$history" | jq -r '.events[] | select(.type=="TaskFailed") | "TaskFailed - previousEventId: " + (.previousEventId | tostring)' 2>/dev/null)
-        if [[ -n "$task_failed_info" ]]; then
-            print_verbose "TaskFailed event details:"
-            echo "$task_failed_info" | while IFS= read -r line; do
+        # Show all state names found in the execution
+        local all_states
+        all_states=$(echo "$history" | jq -r '.events[] | select(.type | contains("Entered")) | (.stateEnteredEventDetails.name // .taskStateEnteredEventDetails.name // .lambdaFunctionScheduledEventDetails.name // "unknown") | select(. != "unknown")' 2>/dev/null | sort -u)
+        if [[ -n "$all_states" ]]; then
+            print_verbose "All states in execution:"
+            echo "$all_states" | while IFS= read -r line; do
+                print_verbose "  - $line"
+            done
+        fi
+
+        # Show detailed event correlation for LambdaFunctionFailed events
+        local lambda_failures
+        lambda_failures=$(echo "$history" | jq -r '.events[] | select(.type=="LambdaFunctionFailed") | "LambdaFunctionFailed at id: \(.id), previousEventId: \(.previousEventId)"' 2>/dev/null)
+        if [[ -n "$lambda_failures" ]]; then
+            print_verbose "LambdaFunctionFailed events:"
+            echo "$lambda_failures" | while IFS= read -r line; do
                 print_verbose "  $line"
             done
         fi
     fi
 
-    # Build a map of event IDs to state names from StateEntered events
-    # Then check if any TaskFailed event references a StateEntered event for our target state
-    local state_entered_map
-    state_entered_map=$(echo "$history" | jq -r '
-        .events[] |
-        select(.type == "TaskStateEntered" or .type == "StateEntered") |
-        "\(.id):\(.stateEnteredEventDetails.name // .taskStateEnteredEventDetails.name // "unknown")"
+    # Build a comprehensive map of event IDs to state names
+    # This includes TaskStateEntered, StateEntered, and LambdaFunctionScheduled events
+    local event_to_state_map
+    event_to_state_map=$(echo "$history" | jq -r '
+        [.events[] | {id: .id, type: .type, name: (.stateEnteredEventDetails.name // .taskStateEnteredEventDetails.name // empty), previousEventId: .previousEventId}] |
+        map(select(.name)) |
+        .[] |
+        "\(.id):\(.name)"
     ' 2>/dev/null)
 
-    # Find TaskFailed events and check their previous event
-    while IFS=: read -r event_id state_name; do
-        if [[ "$state_name" == "$target_state" ]]; then
-            # Check if there's a TaskFailed event that references this state
-            if echo "$history" | jq -e ".events[] | select(.type==\"TaskFailed\" and .previousEventId==$event_id)" &>/dev/null; then
-                print_verbose "Found TaskFailed event for state: $target_state (via event ID correlation)"
+    # Also get LambdaFunctionScheduled events which have resource information
+    local lambda_scheduled_map
+    lambda_scheduled_map=$(echo "$history" | jq -r '
+        [.events[] | select(.type == "LambdaFunctionScheduled") | {id: .id, previousEventId: .previousEventId}] |
+        .[] |
+        "\(.id):\(.previousEventId)"
+    ' 2>/dev/null)
+
+    # Check for LambdaFunctionFailed events and trace back to find the state
+    local lambda_failed_events
+    lambda_failed_events=$(echo "$history" | jq -r '.events[] | select(.type=="LambdaFunctionFailed") | "\(.id):\(.previousEventId)"' 2>/dev/null)
+
+    if [[ -n "$lambda_failed_events" ]]; then
+        while IFS=: read -r failed_id prev_id; do
+            # The previousEventId should point to a LambdaFunctionScheduled event
+            # We need to find which state that LambdaFunctionScheduled belongs to
+            local scheduled_prev_id
+            scheduled_prev_id=$(echo "$lambda_scheduled_map" | grep "^${prev_id}:" | cut -d: -f2)
+
+            if [[ -n "$scheduled_prev_id" ]]; then
+                # Now check if this scheduled event's previous ID is a state entry for our target state
+                local state_name
+                state_name=$(echo "$event_to_state_map" | grep "^${scheduled_prev_id}:" | cut -d: -f2)
+
+                if [[ "$state_name" == "$target_state" ]]; then
+                    print_verbose "Found LambdaFunctionFailed for state: $target_state (via event chain: state_entered[$scheduled_prev_id] -> lambda_scheduled[$prev_id] -> lambda_failed[$failed_id])"
+                    return 0
+                fi
+            fi
+        done <<< "$lambda_failed_events"
+    fi
+
+    # Check for TaskFailed events
+    local task_failed_events
+    task_failed_events=$(echo "$history" | jq -r '.events[] | select(.type=="TaskFailed") | "\(.previousEventId)"' 2>/dev/null)
+
+    if [[ -n "$task_failed_events" ]]; then
+        while IFS= read -r prev_id; do
+            local state_name
+            state_name=$(echo "$event_to_state_map" | grep "^${prev_id}:" | cut -d: -f2)
+
+            if [[ "$state_name" == "$target_state" ]]; then
+                print_verbose "Found TaskFailed event for state: $target_state"
                 return 0
             fi
-        fi
-    done <<< "$state_entered_map"
-
-    # Fallback: Check for LambdaFunctionFailed with state name
-    if echo "$history" | jq -e ".events[] | select(.type==\"LambdaFunctionFailed\") | select(.previousEventId as \$prev | any(.events[]; .id == \$prev and (.stateEnteredEventDetails.name // .taskStateEnteredEventDetails.name) == \"$target_state\"))" &>/dev/null 2>&1; then
-        print_verbose "Found LambdaFunctionFailed for state: $target_state"
-        return 0
+        done <<< "$task_failed_events"
     fi
 
     print_verbose "No failure found for state: $target_state"
