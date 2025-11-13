@@ -436,6 +436,13 @@ failed_at_target_state() {
         "\(.id):\(.name)"
     ' 2>/dev/null)
 
+    if [[ "$VERBOSE" == true ]]; then
+        print_verbose "Event to state map (showing entries with '$target_state'):"
+        echo "$event_to_state_map" | grep -i "$target_state" | while IFS= read -r line; do
+            print_verbose "  $line"
+        done
+    fi
+
     # Also get LambdaFunctionScheduled events which have resource information
     local lambda_scheduled_map
     lambda_scheduled_map=$(echo "$history" | jq -r '
@@ -444,26 +451,41 @@ failed_at_target_state() {
         "\(.id):\(.previousEventId)"
     ' 2>/dev/null)
 
+    if [[ "$VERBOSE" == true ]]; then
+        print_verbose "Lambda scheduled map (all entries):"
+        echo "$lambda_scheduled_map" | while IFS= read -r line; do
+            print_verbose "  $line"
+        done
+    fi
+
     # Check for LambdaFunctionFailed events and trace back to find the state
     local lambda_failed_events
     lambda_failed_events=$(echo "$history" | jq -r '.events[] | select(.type=="LambdaFunctionFailed") | "\(.id):\(.previousEventId)"' 2>/dev/null)
 
     if [[ -n "$lambda_failed_events" ]]; then
         while IFS=: read -r failed_id prev_id; do
+            print_verbose "Tracing LambdaFunctionFailed[id=$failed_id, prevId=$prev_id]"
+
             # The previousEventId should point to a LambdaFunctionScheduled event
             # We need to find which state that LambdaFunctionScheduled belongs to
             local scheduled_prev_id
             scheduled_prev_id=$(echo "$lambda_scheduled_map" | grep "^${prev_id}:" | cut -d: -f2)
+
+            print_verbose "  LambdaFunctionScheduled[id=$prev_id] -> prevId=$scheduled_prev_id"
 
             if [[ -n "$scheduled_prev_id" ]]; then
                 # Now check if this scheduled event's previous ID is a state entry for our target state
                 local state_name
                 state_name=$(echo "$event_to_state_map" | grep "^${scheduled_prev_id}:" | cut -d: -f2)
 
+                print_verbose "  StateEntered[id=$scheduled_prev_id] -> state='$state_name'"
+
                 if [[ "$state_name" == "$target_state" ]]; then
                     print_verbose "Found LambdaFunctionFailed for state: $target_state (via event chain: state_entered[$scheduled_prev_id] -> lambda_scheduled[$prev_id] -> lambda_failed[$failed_id])"
                     return 0
                 fi
+            else
+                print_verbose "  Could not find LambdaFunctionScheduled event with id=$prev_id in lambda_scheduled_map"
             fi
         done <<< "$lambda_failed_events"
     fi
