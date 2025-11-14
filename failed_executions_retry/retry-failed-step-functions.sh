@@ -458,6 +458,21 @@ failed_at_target_state() {
         done
     fi
 
+    # Also get LambdaFunctionStarted events - these sit between Failed and Scheduled
+    local lambda_started_map
+    lambda_started_map=$(echo "$history" | jq -r '
+        [.events[] | select(.type == "LambdaFunctionStarted") | {id: .id, previousEventId: .previousEventId}] |
+        .[] |
+        "\(.id):\(.previousEventId)"
+    ' 2>/dev/null)
+
+    if [[ "$VERBOSE" == true ]]; then
+        print_verbose "Lambda started map (all entries):"
+        echo "$lambda_started_map" | while IFS= read -r line; do
+            print_verbose "  $line"
+        done
+    fi
+
     # Check for LambdaFunctionFailed events and trace back to find the state
     local lambda_failed_events
     lambda_failed_events=$(echo "$history" | jq -r '.events[] | select(.type=="LambdaFunctionFailed") | "\(.id):\(.previousEventId)"' 2>/dev/null)
@@ -466,26 +481,36 @@ failed_at_target_state() {
         while IFS=: read -r failed_id prev_id; do
             print_verbose "Tracing LambdaFunctionFailed[id=$failed_id, prevId=$prev_id]"
 
-            # The previousEventId should point to a LambdaFunctionScheduled event
-            # We need to find which state that LambdaFunctionScheduled belongs to
-            local scheduled_prev_id
-            scheduled_prev_id=$(echo "$lambda_scheduled_map" | grep "^${prev_id}:" | cut -d: -f2)
+            # The previousEventId points to a LambdaFunctionStarted event
+            # The event chain is: Failed -> Started -> Scheduled -> StateEntered
+            local started_prev_id
+            started_prev_id=$(echo "$lambda_started_map" | grep "^${prev_id}:" | cut -d: -f2)
 
-            print_verbose "  LambdaFunctionScheduled[id=$prev_id] -> prevId=$scheduled_prev_id"
+            if [[ -n "$started_prev_id" ]]; then
+                print_verbose "  LambdaFunctionStarted[id=$prev_id] -> prevId=$started_prev_id"
 
-            if [[ -n "$scheduled_prev_id" ]]; then
-                # Now check if this scheduled event's previous ID is a state entry for our target state
-                local state_name
-                state_name=$(echo "$event_to_state_map" | grep "^${scheduled_prev_id}:" | cut -d: -f2)
+                # Now find the LambdaFunctionScheduled event
+                local scheduled_prev_id
+                scheduled_prev_id=$(echo "$lambda_scheduled_map" | grep "^${started_prev_id}:" | cut -d: -f2)
 
-                print_verbose "  StateEntered[id=$scheduled_prev_id] -> state='$state_name'"
+                print_verbose "  LambdaFunctionScheduled[id=$started_prev_id] -> prevId=$scheduled_prev_id"
 
-                if [[ "$state_name" == "$target_state" ]]; then
-                    print_verbose "Found LambdaFunctionFailed for state: $target_state (via event chain: state_entered[$scheduled_prev_id] -> lambda_scheduled[$prev_id] -> lambda_failed[$failed_id])"
-                    return 0
+                if [[ -n "$scheduled_prev_id" ]]; then
+                    # Now check if this scheduled event's previous ID is a state entry for our target state
+                    local state_name
+                    state_name=$(echo "$event_to_state_map" | grep "^${scheduled_prev_id}:" | cut -d: -f2)
+
+                    print_verbose "  StateEntered[id=$scheduled_prev_id] -> state='$state_name'"
+
+                    if [[ "$state_name" == "$target_state" ]]; then
+                        print_verbose "Found LambdaFunctionFailed for state: $target_state (via event chain: state_entered[$scheduled_prev_id] -> lambda_scheduled[$started_prev_id] -> lambda_started[$prev_id] -> lambda_failed[$failed_id])"
+                        return 0
+                    fi
+                else
+                    print_verbose "  Could not find LambdaFunctionScheduled event with id=$started_prev_id in lambda_scheduled_map"
                 fi
             else
-                print_verbose "  Could not find LambdaFunctionScheduled event with id=$prev_id in lambda_scheduled_map"
+                print_verbose "  Could not find LambdaFunctionStarted event with id=$prev_id in lambda_started_map"
             fi
         done <<< "$lambda_failed_events"
     fi
