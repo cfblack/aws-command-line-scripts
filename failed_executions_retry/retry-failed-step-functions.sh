@@ -544,17 +544,38 @@ start_new_execution() {
 
     print_info "Starting new execution: $execution_name"
 
+    # Create a temporary file for the input to avoid shell escaping issues
+    local input_file
+    input_file=$(mktemp)
+
+    # Write the input JSON to the temp file, removing outer quotes if present
+    echo "$input" | jq -r '.' > "$input_file" 2>/dev/null
+
+    if [[ $? -ne 0 ]]; then
+        print_error "Failed to parse input JSON for execution: $execution_name"
+        rm -f "$input_file"
+        return 1
+    fi
+
+    print_verbose "  -> Using temp file for input: $input_file"
+
     local response
     response=$(aws stepfunctions start-execution \
         --state-machine-arn "$state_machine_arn" \
         --name "$execution_name" \
-        --input "$input" \
+        --input "file://$input_file" \
         --profile "$profile" \
         --region "$region" \
-        --output json 2>/dev/null)
+        --output json 2>&1)
 
-    if [[ $? -ne 0 ]]; then
+    local exit_code=$?
+
+    # Clean up temp file
+    rm -f "$input_file"
+
+    if [[ $exit_code -ne 0 ]]; then
         print_error "Failed to start execution: $execution_name"
+        print_verbose "AWS CLI error: $response"
         return 1
     fi
 
@@ -648,8 +669,12 @@ process_failed_executions() {
             local details
             details=$(get_execution_details "$execution_arn" "$region" "$profile")
 
+            # Extract and validate the input JSON
+            # Use jq to extract, parse if it's a string, and output compacted JSON
             local execution_input
-            execution_input=$(echo "$details" | jq -r '.input // "{}"')
+            execution_input=$(echo "$details" | jq -c '.input // "{}" | if type == "string" then . else tojson end')
+
+            print_verbose "  -> Execution input (first 100 chars): ${execution_input:0:100}"
 
             # Extract new execution name
             local new_execution_name
